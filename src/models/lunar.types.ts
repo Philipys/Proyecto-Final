@@ -165,3 +165,56 @@ export interface LolaDemSample {
   readonly maxSlopeDeg: number;
   readonly elevationsM: readonly (readonly number[])[];
 }
+
+export interface MonthlySiteStats {
+  readonly month: string;
+  readonly totalHours: number;
+  readonly daylightHours: number;
+  readonly optimalLightingHours: number;
+  readonly lowShadowHours: number;
+  readonly directEarthLinkHours: number;
+  readonly directEarthLinkPct: number;
+}
+
+export interface SiteComparisonSummary {
+  readonly site: LunarSite;
+  readonly totalHours: number;
+  readonly daylightHours: number;
+  readonly optimalLightingHours: number;
+  readonly lowShadowHours: number;
+  readonly directEarthLinkHours: number;
+  readonly directEarthLinkPct: number;
+  readonly monthly: readonly MonthlySiteStats[];
+}
+
+export interface SiteComparisonResponse {
+  readonly year: number;
+  readonly siteA: SiteComparisonSummary;
+  readonly siteB: SiteComparisonSummary;
+}
+
+export interface TelemetryWindowResponse {
+  readonly site: LunarSite;
+  readonly startUtc: string;
+  readonly hours: number;
+  readonly telemetry: readonly HourlyTelemetry[];
+}
+
+export interface BestWindowsResponse {
+  readonly site: LunarSite;
+  readonly durationHours: number;
+  readonly hasRelaySatellite: boolean;
+  readonly windows: readonly OptimalWindowRecommendation[];
+}
+
+export interface CreateMissionPayload {
+  readonly name: string;
+  readonly notes: string;
+  readonly config: MissionConfig;
+}
+
+export interface UpdateMissionPayload {
+  readonly name?: string;
+  readonly notes?: string;
+  readonly config?: Partial<MissionConfig>;
+}

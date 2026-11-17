@@ -369,6 +369,38 @@ function validateMissionConfig(
   }
 }
 
+function computeScoreFromStatuses(
+  verdict: RuleVerdict,
+  lightingStatus: RuleVerdict,
+  energyStatus: RuleVerdict,
+  minBatteryPct: number,
+  communicationsStatus: RuleVerdict,
+  terrainStatus: RuleVerdict,
+  evaStatus: RuleVerdict,
+): number {
+  let score = 100;
+
+  if (lightingStatus === 'NO-GO') score -= 35;
+  else if (lightingStatus === 'CAUTION') score -= 12;
+
+  if (energyStatus === 'NO-GO') score -= 35;
+  else if (energyStatus === 'CAUTION') score -= 12;
+  else if (minBatteryPct < 60) score -= 4;
+
+  if (communicationsStatus === 'NO-GO') score -= 30;
+  else if (communicationsStatus === 'CAUTION') score -= 10;
+
+  if (terrainStatus === 'NO-GO') score -= 30;
+  else if (terrainStatus === 'CAUTION') score -= 10;
+
+  if (evaStatus === 'NO-GO') score -= 25;
+
+  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  if (verdict === 'NO-GO') return Math.min(45, clamped);
+  if (verdict === 'CAUTION') return Math.max(50, Math.min(89, clamped));
+  return Math.max(80, clamped);
+}
+
 function computeViabilityScore(
   verdict: RuleVerdict,
   lighting: LightingRuleResult,
@@ -377,27 +409,15 @@ function computeViabilityScore(
   terrain: TerrainRuleResult,
   eva: EvaRuleResult,
 ): number {
-  let score = 100;
-
-  if (lighting.status === 'NO-GO') score -= 35;
-  else if (lighting.status === 'CAUTION') score -= 12;
-
-  if (energy.status === 'NO-GO') score -= 35;
-  else if (energy.status === 'CAUTION') score -= 12;
-  else if (energy.minBatteryPct < 60) score -= 4;
-
-  if (communications.status === 'NO-GO') score -= 30;
-  else if (communications.status === 'CAUTION') score -= 10;
-
-  if (terrain.status === 'NO-GO') score -= 30;
-  else if (terrain.status === 'CAUTION') score -= 10;
-
-  if (eva.status === 'NO-GO') score -= 25;
-
-  const clamped = Math.max(0, Math.min(100, Math.round(score)));
-  if (verdict === 'NO-GO') return Math.min(45, clamped);
-  if (verdict === 'CAUTION') return Math.max(50, Math.min(89, clamped));
-  return Math.max(80, clamped);
+  return computeScoreFromStatuses(
+    verdict,
+    lighting.status,
+    energy.status,
+    energy.minBatteryPct,
+    communications.status,
+    terrain.status,
+    eva.status,
+  );
 }
 
 /**
@@ -510,51 +530,198 @@ export function findBestLandingWindows(
   baseConfig: Omit<MissionConfig, 'startUtc'>,
   topK = 3,
 ): OptimalWindowRecommendation[] {
-  const { durationHours } = baseConfig;
+  const {
+    durationHours,
+    batteryCapacityKwh,
+    baseConsumptionKw,
+    solarPanelMaxKw,
+    hasRelaySatellite,
+  } = baseConfig;
+
   if (!Number.isInteger(durationHours) || durationHours < 1 || durationHours > 720) {
     throw new RangeError('La duración de ventana debe estar entre 1 y 720 horas.');
   }
-  if (annualTelemetry.length < durationHours) {
-    return [];
+  if (!Number.isFinite(batteryCapacityKwh) || batteryCapacityKwh <= 0) {
+    throw new RangeError('La capacidad de batería debe ser mayor que cero.');
+  }
+  if (!Number.isFinite(baseConsumptionKw) || baseConsumptionKw <= 0) {
+    throw new RangeError('El consumo base debe ser mayor que cero.');
+  }
+  if (!Number.isFinite(solarPanelMaxKw) || solarPanelMaxKw < 0) {
+    throw new RangeError('La potencia solar máxima no puede ser negativa.');
   }
 
-  interface Candidate {
-    index: number;
-    evaluation: MissionEvaluation;
+  const totalHours = annualTelemetry.length;
+  if (totalHours < durationHours) {
+    return [];
   }
 
   const resolvedSlopeDeg =
     baseConfig.terrainSlopeDeg ??
     getLunarSiteById(baseConfig.siteId)?.terrainSlopeDeg ??
     5.0;
-  const candidates: Candidate[] = [];
-  for (let i = 0; i <= annualTelemetry.length - durationHours; i++) {
-    const slice = annualTelemetry.slice(i, i + durationHours);
-    const evaluation = evaluateMissionWindow(slice, {
-      ...baseConfig,
-      terrainSlopeDeg: resolvedSlopeDeg,
-      startUtc: slice[0].utcIso,
-    });
-    candidates.push({ index: i, evaluation });
+  const terrainStatus = evaluateTerrainSlope(resolvedSlopeDeg).status;
+
+  const waypoints = baseConfig.waypoints ?? [];
+  const hasEvaRoute = waypoints.length >= 2;
+  const evaSpeedKmh = baseConfig.evaSpeedKmh ?? DEFAULT_EVA_SPEED_KMH;
+  const maxEvaRangeKm = baseConfig.maxEvaRangeKm ?? DEFAULT_MAX_EVA_RANGE_KM;
+  const evaMetrics = hasEvaRoute
+    ? calculateEvaRouteMetrics(waypoints, evaSpeedKmh)
+    : null;
+  const evaExceedsRange =
+    evaMetrics !== null && evaMetrics.roundTripKm > maxEvaRangeKm;
+
+  // Precomputa balance neto horario (kWh) y banderas para evitar asignaciones en la ventana deslizante
+  const deltaKwh = new Float64Array(totalHours);
+  const solarEl = new Float64Array(totalHours);
+  const hasDte = new Uint8Array(totalHours);
+
+  for (let t = 0; t < totalHours; t++) {
+    const row = annualTelemetry[t];
+    const el = row.solarElevationDeg;
+    solarEl[t] = el;
+    const pGenKw =
+      el > 0
+        ? solarPanelMaxKw * Math.min(1, Math.sin(el * DEG_TO_RAD) / SIN_15_DEG)
+        : 0;
+    deltaKwh[t] = pGenKw - baseConsumptionKw;
+    hasDte[t] = row.earthElevationDeg >= MIN_DTE_EARTH_DEG ? 1 : 0;
+  }
+
+  interface Candidate {
+    index: number;
+    verdict: RuleVerdict;
+    viabilityScore: number;
+    daylightHours: number;
+    minBatteryPct: number;
+    directLinkPct: number;
+  }
+
+  const maxStart = totalHours - durationHours;
+  const candidates: Candidate[] = new Array<Candidate>(maxStart + 1);
+
+  for (let i = 0; i <= maxStart; i++) {
+    const landingEl = solarEl[i];
+    const lightingStatus: RuleVerdict =
+      landingEl <= 0 ? 'NO-GO' : landingEl < MIN_OPTIMAL_SOLAR_DEG ? 'CAUTION' : 'GO';
+
+    let daylightHours = 0;
+    let directLinkHours = 0;
+    let socKwh = batteryCapacityKwh;
+    let minBatteryPctRaw = 100;
+    let safeWindowHours = 0;
+    let safeWindowOpen = true;
+
+    const endIdx = i + durationHours;
+    for (let t = i; t < endIdx; t++) {
+      const el = solarEl[t];
+      const dte = hasDte[t] === 1;
+      if (el > 0) {
+        daylightHours++;
+      }
+      if (dte) {
+        directLinkHours++;
+      }
+      if (safeWindowOpen) {
+        if (el > 0 && (hasRelaySatellite || dte)) {
+          safeWindowHours++;
+        } else {
+          safeWindowOpen = false;
+        }
+      }
+
+      socKwh += deltaKwh[t];
+      if (socKwh < 0) socKwh = 0;
+      else if (socKwh > batteryCapacityKwh) socKwh = batteryCapacityKwh;
+
+      const socPct = (socKwh / batteryCapacityKwh) * 100;
+      if (socPct < minBatteryPctRaw) {
+        minBatteryPctRaw = socPct;
+      }
+    }
+
+    const minBatteryPct = round2(minBatteryPctRaw);
+    const energyStatus: RuleVerdict =
+      minBatteryPctRaw < CRITICAL_BATTERY_PCT
+        ? 'NO-GO'
+        : minBatteryPctRaw < CAUTION_BATTERY_PCT
+          ? 'CAUTION'
+          : 'GO';
+
+    const directLinkPct = round2((directLinkHours / durationHours) * 100);
+    const lossPct = 100 - directLinkPct;
+    const commsStatus: RuleVerdict = hasRelaySatellite
+      ? 'GO'
+      : lossPct > 50
+        ? 'NO-GO'
+        : lossPct > 0
+          ? 'CAUTION'
+          : 'GO';
+
+    let evaStatus: RuleVerdict = 'GO';
+    if (evaMetrics !== null) {
+      if (evaExceedsRange) {
+        evaStatus = 'NO-GO';
+      } else {
+        const margin = Number(
+          (safeWindowHours - evaMetrics.estimatedHours).toFixed(2),
+        );
+        if (margin < MIN_EVA_RETURN_MARGIN_HOURS) {
+          evaStatus = 'NO-GO';
+        }
+      }
+    }
+
+    let verdict: RuleVerdict = 'GO';
+    if (
+      lightingStatus === 'NO-GO' ||
+      energyStatus === 'NO-GO' ||
+      commsStatus === 'NO-GO' ||
+      terrainStatus === 'NO-GO' ||
+      evaStatus === 'NO-GO'
+    ) {
+      verdict = 'NO-GO';
+    } else if (
+      lightingStatus === 'CAUTION' ||
+      energyStatus === 'CAUTION' ||
+      commsStatus === 'CAUTION' ||
+      terrainStatus === 'CAUTION'
+    ) {
+      verdict = 'CAUTION';
+    }
+
+    const viabilityScore = computeScoreFromStatuses(
+      verdict,
+      lightingStatus,
+      energyStatus,
+      minBatteryPct,
+      commsStatus,
+      terrainStatus,
+      evaStatus,
+    );
+
+    candidates[i] = {
+      index: i,
+      verdict,
+      viabilityScore,
+      daylightHours,
+      minBatteryPct,
+      directLinkPct,
+    };
   }
 
   candidates.sort((a, b) => {
-    const rankDiff =
-      VERDICT_RANK[b.evaluation.verdict] - VERDICT_RANK[a.evaluation.verdict];
+    const rankDiff = VERDICT_RANK[b.verdict] - VERDICT_RANK[a.verdict];
     if (rankDiff !== 0) return rankDiff;
 
-    const scoreDiff = b.evaluation.viabilityScore - a.evaluation.viabilityScore;
+    const scoreDiff = b.viabilityScore - a.viabilityScore;
     if (scoreDiff !== 0) return scoreDiff;
 
-    const lightDiff =
-      b.evaluation.rules.lighting.daylightHours -
-      a.evaluation.rules.lighting.daylightHours;
+    const lightDiff = b.daylightHours - a.daylightHours;
     if (lightDiff !== 0) return lightDiff;
 
-    return (
-      b.evaluation.rules.energy.minBatteryPct -
-      a.evaluation.rules.energy.minBatteryPct
-    );
+    return b.minBatteryPct - a.minBatteryPct;
   });
 
   const selected: OptimalWindowRecommendation[] = [];
@@ -571,11 +738,11 @@ export function findBestLandingWindows(
     selected.push({
       startUtc: startRow.utcIso,
       endUtc: endRow.utcIso,
-      verdict: candidate.evaluation.verdict,
-      viabilityScore: candidate.evaluation.viabilityScore,
-      daylightHours: candidate.evaluation.rules.lighting.daylightHours,
-      minBatteryPct: candidate.evaluation.rules.energy.minBatteryPct,
-      directLinkPct: candidate.evaluation.rules.communications.directLinkPct,
+      verdict: candidate.verdict,
+      viabilityScore: candidate.viabilityScore,
+      daylightHours: candidate.daylightHours,
+      minBatteryPct: candidate.minBatteryPct,
+      directLinkPct: candidate.directLinkPct,
     });
     chosenIndices.push(candidate.index);
 

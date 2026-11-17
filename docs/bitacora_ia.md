@@ -40,6 +40,16 @@ Registro transparente de herramientas de IA utilizadas, decisiones tomadas frent
 
 ---
 
+### Sesión 3 — Paso 4: Frontend MVVM, Visor Lunar 3D (Three.js + LOLA DEM) y Consola HUD OpenMCT
+* **Qué se delegó al agente:**
+  * Cliente REST [`src/services/MissionApiClient.ts`](../src/services/MissionApiClient.ts), ViewModel reactivo [`src/viewmodels/NavigatorViewModel.ts`](../src/viewmodels/NavigatorViewModel.ts), escena 3D WebGL [`src/views/LunarScene3D.ts`](../src/views/LunarScene3D.ts), consola HUD [`src/views/HudConsoleView.ts`](../src/views/HudConsoleView.ts) y suites TDD en `test/`.
+* **Decisiones humanas y verificaciones aplicadas:**
+  1. **Aislamiento estricto MVVM:** Se verificó que `NavigatorViewModel` no importa `three` ni accede al DOM (`window`/`document`), ejecutando toda la reactividad y previsualización mediante `MissionEvaluator` e inyección de `NavigatorApiGateway`.
+  2. **Modern Web Guidance (Google Chrome):** Se consultaron las guías `dialog`, `responsive-table`, `css-layout`, `accessibility`, `color`, `forms` y `html`, aplicando `<dialog closedby="any">` con fallback `getBoundingClientRect()`, tabla comparativa con `@container`, `color-mix(in oklab, ...)` en lugar de `oklch` con neutros, y construcción DOM por `textContent` sin `innerHTML` para prevenir XSS.
+  3. **Auditoría de producción:** Tras instalar `three`, `@types/three` y `vite`, `npm audit --omit=dev` confirmó **0 vulnerabilidades** en producción.
+
+---
+
 ## 3. Errores / Limitaciones del Agente Detectados y Corregidos
 *(Nota: El curso exige documentar al menos **3 casos reales** a lo largo del proyecto donde el agente se equivocó, propuso algo inseguro/inviable o falló en el entorno. Este registro se irá ampliando en cada fase.)*
 
@@ -53,4 +63,7 @@ Registro transparente de herramientas de IA utilizadas, decisiones tomadas frent
 * **Cómo se detectó:** Inspeccionando los resultados reales impresos por el script (`min=1737892 m`, `pendiente media=0.02°`) y leyendo línea por línea la etiqueta oficial `data/lola/ldem_80s_80m.lbl`, donde la NASA documenta explícitamente `MAP_SCALE = 80 <m/pix>` y `HEIGHT = (DN * SCALING_FACTOR)` (mientras `OFFSET` convierte a radio planetario).
 * **Corrección aplicada:** Se corrigió `parseLolaPdsLabel()` para leer la unidad real (`<m/pix>` vs. `<km/pix>`), se pasó `offset = 0` para alturas relativas al geoide lunar y se re-extrajo la grilla real `48x48` del Polo Sur, obteniendo valores físicos reales (`-766.5 m` a `-238.5 m` y pendiente media de `6.27°`).
 
-*(Pendiente registrar Caso #3 durante las fases de Frontend 3D, Backend/Seguridad o MCP).*
+### Caso #3 — Distorsión métrica polar (`6.4%`) por aproximación plana `cos(centerLat)` al proyectar waypoints sobre la malla LOLA DEM (`80 m/píxel`)
+* **Qué ocurrió:** En la primera implementación de `lolaGridPointToWorld()` dentro de [`src/views/LunarScene3D.ts`](../src/views/LunarScene3D.ts), el agente aproximó el desplazamiento de longitud sobre la grilla polar sur dividiendo por `cos(centerLatDeg)` constante (a `-89.45°`, donde `cos(-89.45°) = 0.0096`) en lugar de resolver la geometría esférica real alrededor del Polo Sur. Al desplazar un punto `1.08 km` al norte de `-89.45°`, el radio del paralelo crece en `6.4%`, por lo que `10` píxeles horizontales (`800 m` reales en LOLA) se proyectaban a `0.8517 km` al medirlos con Haversine en la Regla 5 EVA.
+* **Cómo se detectó:** Al ejecutar la prueba unitaria TDD [`test/lunarSceneMath.test.ts`](../test/lunarSceneMath.test.ts), que falló inmediatamente (`expected 0.851699... to be less than 0.85`).
+* **Corrección aplicada:** Se reemplazó la aproximación plana tanto en `lolaGridPointToWorld()` como en su inversa `latLonToLolaWorld()` por la proyección esférica acimutal equidistante exacta con radio lunar $R_{\text{Luna}} = 1737.4\text{ km}$, eliminando el sesgo polar y manejando sin singularidad las coordenadas cercanas a `-90°`.

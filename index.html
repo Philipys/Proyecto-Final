@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Artemis Lunar Navigator | Consola de Telemetría 2027</title>
+    <link rel="stylesheet" href="/src/views/styles.css" />
+  </head>
+  <body>
+    <a href="#main-console" class="skip-link visually-hidden">Saltar a la consola principal</a>
+
+    <header class="hud-header">
+      <div class="hud-header-bar">
+        <div class="hud-brand">
+          <span class="hud-mission-code" aria-hidden="true">ARTEMIS-NAV // 2027</span>
+          <h1>Artemis Lunar Navigator</h1>
+        </div>
+
+        <div class="hud-header-status">
+          <div
+            id="global-verdict-badge"
+            class="verdict-pill"
+            data-verdict="PENDING"
+            role="status"
+            aria-live="polite"
+          >
+            <span aria-hidden="true">◆</span>
+            <span id="global-verdict-text">SINCRONIZANDO...</span>
+            <span id="global-score-text" class="mono-num">--/100</span>
+          </div>
+
+          <button
+            type="button"
+            id="open-comparator-btn"
+            class="btn btn-secondary"
+          >
+            Comparar Sitios 2027
+          </button>
+        </div>
+      </div>
+
+      <div class="hud-status-strip">
+        <p id="status-banner" class="status-banner" role="status" aria-live="polite">
+          Inicializando enlace con servidor de efemérides NASA JPL Horizons...
+        </p>
+        <p id="error-banner" class="error-banner" role="alert" aria-live="assertive" hidden></p>
+      </div>
+    </header>
+
+    <main id="main-console" tabindex="-1" class="hud-workspace">
+      <!-- PANEL IZQUIERDO: SITIOS + CONFIGURACIÓN DE MISIÓN + VENTANAS ÓPTIMAS -->
+      <aside class="hud-panel hud-controls" aria-labelledby="panel-config-heading">
+        <section class="panel-section" aria-labelledby="panel-config-heading">
+          <h2 id="panel-config-heading" class="section-heading">1. Catálogo de Sitios (2027)</h2>
+          <p class="section-hint">Selecciona un sitio aquí o haz clic directo sobre el globo 3D.</p>
+          <ul id="sites-list" class="sites-list" role="list"></ul>
+        </section>
+
+        <section class="panel-section" aria-labelledby="mission-params-heading">
+          <h2 id="mission-params-heading" class="section-heading">2. Parámetros de Misión</h2>
+          <form id="mission-params-form" class="hud-form" aria-labelledby="mission-params-heading" novalidate>
+            <div class="form-field">
+              <label for="input-start-utc">Inicio de Alunizaje (UTC 2027)</label>
+              <input
+                type="datetime-local"
+                id="input-start-utc"
+                name="startUtc"
+                min="2027-01-01T00:00"
+                max="2027-12-31T22:00"
+                step="3600"
+                value="2027-01-01T00:00"
+                aria-describedby="start-utc-hint"
+                required
+              />
+              <span id="start-utc-hint" class="field-hint">Resolución horaria JPL Horizons (año 2027).</span>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="input-duration-hours">Duración (h)</label>
+                <input
+                  type="number"
+                  id="input-duration-hours"
+                  name="durationHours"
+                  min="1"
+                  max="720"
+                  step="1"
+                  value="72"
+                  required
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="input-battery-kwh">Batería (kWh)</label>
+                <input
+                  type="number"
+                  id="input-battery-kwh"
+                  name="batteryCapacityKwh"
+                  min="1"
+                  max="10000"
+                  step="5"
+                  value="120"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-field">
+                <label for="input-consumption-kw">Consumo Base (kW)</label>
+                <input
+                  type="number"
+                  id="input-consumption-kw"
+                  name="baseConsumptionKw"
+                  min="0.1"
+                  max="1000"
+                  step="0.1"
+                  value="1.5"
+                  required
+                />
+              </div>
+
+              <div class="form-field">
+                <label for="input-solar-kw">Panel Solar Máx (kW)</label>
+                <input
+                  type="number"
+                  id="input-solar-kw"
+                  name="solarPanelMaxKw"
+                  min="0"
+                  max="1000"
+                  step="0.1"
+                  value="3.5"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-checkbox">
+              <input
+                type="checkbox"
+                id="input-relay-satellite"
+                name="hasRelaySatellite"
+              />
+              <label for="input-relay-satellite">Satélite Relay activo (comunicación continua)</label>
+            </div>
+
+            <p id="params-validation-error" class="field-error" role="alert" hidden></p>
+
+            <button type="submit" class="btn btn-primary btn-full">
+              Aplicar Ventana y Simular
+            </button>
+          </form>
+        </section>
+
+        <section class="panel-section" aria-labelledby="best-windows-heading">
+          <div class="section-header-row">
+            <h2 id="best-windows-heading" class="section-heading">3. Top 3 Ventanas 2027</h2>
+            <button type="button" id="refresh-windows-btn" class="btn btn-ghost">
+              Recalcular
+            </button>
+          </div>
+          <ul id="best-windows-list" class="windows-list" role="list"></ul>
+        </section>
+      </aside>
+
+      <!-- PANEL CENTRAL: VISOR 3D WEBGL + TELEMETRÍA EN VIVO + GRÁFICO BATERÍA -->
+      <section class="hud-viewport-column" aria-labelledby="viewport-heading">
+        <div class="viewport-toolbar">
+          <div class="viewport-title-group">
+            <h2 id="viewport-heading" class="section-heading">Visor Lunar 3D (WebGL / LOLA)</h2>
+            <span id="active-site-label" class="mono-badge">--</span>
+          </div>
+
+          <div class="viewport-actions" role="group" aria-label="Modos de cámara y trazado EVA">
+            <button
+              type="button"
+              id="mode-globe-btn"
+              class="btn btn-toggle"
+              aria-pressed="true"
+            >
+              Globo Lunar 3D
+            </button>
+            <button
+              type="button"
+              id="mode-lola-btn"
+              class="btn btn-toggle"
+              aria-pressed="false"
+            >
+              Relieve LOLA 80 m/px
+            </button>
+            <button
+              type="button"
+              id="eva-draw-btn"
+              class="btn btn-toggle"
+              aria-pressed="false"
+            >
+              Trazar Ruta EVA
+            </button>
+            <button type="button" id="eva-undo-btn" class="btn btn-ghost">
+              Deshacer WP
+            </button>
+            <button type="button" id="eva-clear-btn" class="btn btn-ghost">
+              Limpiar EVA
+            </button>
+            <button type="button" id="reset-camera-btn" class="btn btn-ghost">
+              Reset Cámara
+            </button>
+          </div>
+        </div>
+
+        <div class="viewport-stage-wrapper">
+          <div
+            id="lunar-canvas-host"
+            class="lunar-canvas-host"
+            tabindex="0"
+            aria-label="Visor 3D Lunar interactivo. Arrastra para rotar, usa la rueda para zoom o las flechas del teclado y teclas + o -."
+          ></div>
+
+          <div class="viewport-overlay-top">
+            <span id="viewport-mode-tag" class="hud-chip">MODO: GLOBO SELENOGRÁFICO</span>
+            <span id="viewport-hover-coords" class="hud-chip mono-num">LISTO PARA INSPECCIÓN</span>
+          </div>
+
+          <div class="viewport-overlay-bottom">
+            <span class="legend-item"><span class="dot dot-sun" aria-hidden="true"></span> Sol 2027</span>
+            <span class="legend-item"><span class="dot dot-earth" aria-hidden="true"></span> Tierra (DTE)</span>
+            <span class="legend-item"><span class="dot dot-eva" aria-hidden="true"></span> Ruta EVA</span>
+          </div>
+        </div>
+
+        <div class="timeline-scrubber-bar">
+          <label for="hour-offset-slider" class="timeline-label">
+            Hora Simulada (<span id="timeline-hour-display" class="mono-num">T+000h</span>):
+          </label>
+          <input
+            type="range"
+            id="hour-offset-slider"
+            min="0"
+            max="71"
+            step="1"
+            value="0"
+          />
+          <time id="timeline-utc-display" class="mono-num">2027-01-01T00:00:00Z</time>
+        </div>
+
+        <dl class="telemetry-strip" aria-label="Telemetría astronómica y topográfica instantánea">
+          <div class="telemetry-cell">
+            <dt>Elevación Solar</dt>
+            <dd id="tel-solar-el" class="mono-num">--°</dd>
+          </div>
+          <div class="telemetry-cell">
+            <dt>Azimut Solar</dt>
+            <dd id="tel-solar-az" class="mono-num">--°</dd>
+          </div>
+          <div class="telemetry-cell">
+            <dt>Elevación Tierra</dt>
+            <dd id="tel-earth-el" class="mono-num">--°</dd>
+          </div>
+          <div class="telemetry-cell">
+            <dt>Pendiente LOLA</dt>
+            <dd id="tel-terrain-slope" class="mono-num">--°</dd>
+          </div>
+          <div class="telemetry-cell">
+            <dt>Distancia EVA (Ida/Vuelta)</dt>
+            <dd id="tel-eva-distance" class="mono-num">0.00 km</dd>
+          </div>
+          <div class="telemetry-cell">
+            <dt>Batería Mínima</dt>
+            <dd id="tel-min-battery" class="mono-num">--%</dd>
+          </div>
+        </dl>
+
+        <figure class="energy-chart-figure">
+          <figcaption id="energy-chart-caption" class="energy-chart-caption">
+            Perfil Horario de Estado de Carga de Batería (%) vs. Umbral Crítico (20%)
+          </figcaption>
+          <svg
+            id="energy-chart-svg"
+            class="energy-chart-svg"
+            viewBox="0 0 640 130"
+            role="img"
+            aria-labelledby="energy-chart-caption"
+          ></svg>
+        </figure>
+      </section>
+
+      <!-- PANEL DERECHO: MOTOR DE 5 REGLAS + CRUD SQLITE DE PLANES -->
+      <aside class="hud-panel hud-evaluation" aria-labelledby="panel-rules-heading">
+        <section class="panel-section" aria-labelledby="panel-rules-heading">
+          <h2 id="panel-rules-heading" class="section-heading">4. Motor de Viabilidad (5 Reglas)</h2>
+          <ul id="rules-list" class="rules-list" role="list"></ul>
+          <div id="waypoints-summary" class="waypoints-box">
+            <h3 class="subsection-heading">Waypoints EVA Trazados (<span id="wp-count" class="mono-num">0</span>)</h3>
+            <ol id="waypoints-list" class="waypoints-list"></ol>
+          </div>
+        </section>
+
+        <section class="panel-section" aria-labelledby="crud-heading">
+          <h2 id="crud-heading" class="section-heading">5. Planes de Misión (SQLite)</h2>
+          <form id="mission-crud-form" class="hud-form" aria-labelledby="crud-heading" novalidate>
+            <div class="form-field">
+              <label for="input-mission-name">Nombre del Plan <span aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                id="input-mission-name"
+                name="missionName"
+                maxlength="120"
+                spellcheck="false"
+                aria-describedby="mission-name-hint"
+                required
+              />
+              <span id="mission-name-hint" class="field-hint">Máximo 120 caracteres. El servidor recalcula el dictamen.</span>
+            </div>
+
+            <div class="form-field">
+              <label for="input-mission-notes">Notas Técnicas de Ingeniería</label>
+              <textarea
+                id="input-mission-notes"
+                name="missionNotes"
+                rows="2"
+                maxlength="2000"
+              ></textarea>
+            </div>
+
+            <p id="crud-validation-error" class="field-error" role="alert" hidden></p>
+
+            <div class="crud-form-actions">
+              <button type="submit" id="save-mission-btn" class="btn btn-primary">
+                Guardar Plan en SQLite
+              </button>
+              <button
+                type="button"
+                id="cancel-edit-btn"
+                class="btn btn-ghost"
+                hidden
+              >
+                Cancelar Edición
+              </button>
+            </div>
+          </form>
+
+          <h3 class="subsection-heading">Planes Guardados</h3>
+          <ul id="saved-missions-list" class="missions-list" role="list"></ul>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="hud-footer">
+      <span>Datos reales: NASA JPL Horizons (2027, paso 1h) · LOLA DEM Polo Sur 80 m/px</span>
+      <span>Arquitectura MVVM · Express REST + SQLite · Three.js WebGL</span>
+    </footer>
+
+    <!-- DIÁLOGO NATIVO: COMPARADOR DE SITIOS 2027 (RF-07) -->
+    <dialog id="comparator-dialog" class="hud-dialog" aria-labelledby="comparator-title" closedby="any">
+      <div class="dialog-header">
+        <h2 id="comparator-title">Comparador Anual de Sitios Lunares 2027</h2>
+        <button type="button" id="close-comparator-btn" class="btn btn-ghost" aria-label="Cerrar comparador de sitios">
+          Cerrar
+        </button>
+      </div>
+
+      <form id="comparator-form" class="comparator-controls" aria-labelledby="comparator-title">
+        <div class="form-field">
+          <label for="select-compare-a">Sitio A</label>
+          <select id="select-compare-a" name="siteA"></select>
+        </div>
+
+        <div class="form-field">
+          <label for="select-compare-b">Sitio B</label>
+          <select id="select-compare-b" name="siteB"></select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Comparar 2027</button>
+      </form>
+
+      <div id="comparator-summary" class="comparator-summary"></div>
+
+      <div
+        tabindex="0"
+        role="region"
+        aria-labelledby="comparison-table-caption"
+        class="table-wrapper"
+      >
+        <table id="comparison-table" class="comparison-table">
+          <caption id="comparison-table-caption">
+            Horas mensuales de iluminación solar y enlace directo a Tierra (DTE &ge; 5°) en 2027
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Mes (2027)</th>
+              <th scope="col" id="th-site-a-sun">Sitio A Luz (h)</th>
+              <th scope="col" id="th-site-a-dte">Sitio A DTE (%)</th>
+              <th scope="col" id="th-site-b-sun">Sitio B Luz (h)</th>
+              <th scope="col" id="th-site-b-dte">Sitio B DTE (%)</th>
+            </tr>
+          </thead>
+          <tbody id="comparison-table-body"></tbody>
+        </table>
+      </div>
+    </dialog>
+
+    <!-- DIÁLOGO NATIVO: CONFIRMACIÓN DESTRUCTIVA CRUD -->
+    <dialog id="delete-confirm-dialog" class="hud-dialog hud-dialog-compact" aria-labelledby="delete-confirm-title" closedby="any">
+      <h2 id="delete-confirm-title">¿Eliminar plan de misión?</h2>
+      <p id="delete-confirm-message" class="dialog-body-text">
+        Esta acción eliminará el plan y todos sus waypoints EVA de SQLite de forma permanente.
+      </p>
+      <form method="dialog" class="dialog-actions">
+        <button type="submit" value="cancel" class="btn btn-secondary" autofocus>
+          Cancelar
+        </button>
+        <button type="submit" value="confirm" class="btn btn-danger">
+          Eliminar Plan
+        </button>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/views/main.ts"></script>
+  </body>
+</html>
