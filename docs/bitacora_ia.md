@@ -37,4 +37,9 @@ Registro transparente de herramientas de IA utilizadas, decisiones tomadas frent
 * **Cómo se detectó:** Revisando la salida real del comando (`Permission denied` + `git rev-parse --show-toplevel` apuntando a `ClaseApps2026` en lugar de `Proyecto Final`).
 * **Corrección aplicada:** Se detuvo la ejecución inmediatamente, se evitó modificar el repositorio padre de la asignatura y se ajustó el plan para usar operaciones de escritura seguras (`write_file`) y aislar `git init` explícitamente dentro de `Proyecto Final`.
 
-*(Pendiente registrar Casos #2 y #3 durante las fases de descarga de datos NASA, implementación del dominio TDD, Three.js y pruebas de seguridad).*
+### Caso #2 — Error de unidades (`<m/pix>` vs. km) y `OFFSET` al decodificar el archivo científico LOLA DEM (`ldem_80s_80m.lbl`)
+* **Qué ocurrió:** Al implementar la primera versión de `LolaDemExtractor.ts` sin haber leído el archivo `.lbl` descargado, el agente asumió que `MAP_SCALE` venía en kilómetros/píxel (`0.08`) y lo multiplicó por `1000`, además de sumar `OFFSET = 1737400` a la elevación. Como resultado, las elevaciones aparecían en `1,737,892 m` y la pendiente media calculada en el Polo Sur cayó falsamente a `0.02°` (dividiendo por 80 km en lugar de 80 m).
+* **Cómo se detectó:** Inspeccionando los resultados reales impresos por el script (`min=1737892 m`, `pendiente media=0.02°`) y leyendo línea por línea la etiqueta oficial `data/lola/ldem_80s_80m.lbl`, donde la NASA documenta explícitamente `MAP_SCALE = 80 <m/pix>` y `HEIGHT = (DN * SCALING_FACTOR)` (mientras `OFFSET` convierte a radio planetario).
+* **Corrección aplicada:** Se corrigió `parseLolaPdsLabel()` para leer la unidad real (`<m/pix>` vs. `<km/pix>`), se pasó `offset = 0` para alturas relativas al geoide lunar y se re-extrajo la grilla real `48x48` del Polo Sur, obteniendo valores físicos reales (`-766.5 m` a `-238.5 m` y pendiente media de `6.27°`).
+
+*(Pendiente registrar Caso #3 durante las fases de Frontend 3D, Backend/Seguridad o MCP).*
