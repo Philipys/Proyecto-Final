@@ -1,0 +1,55 @@
+name: CI - Artemis Lunar Navigator
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  quality-and-test:
+    name: Lint, Typecheck, Tests & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run Vitest with coverage
+        run: npm run test:coverage
+
+      - name: Build project (if present)
+        run: npm run build --if-present
+
+      - name: Upload build and coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-and-coverage-report
+          path: |
+            coverage/
+            dist/
+          if-no-files-found: warn
+          retention-days: 14
