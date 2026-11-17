@@ -27,6 +27,10 @@ const DEFAULT_EVA_SPEED_KMH = 3.0;
 const DEFAULT_MAX_EVA_RANGE_KM = 10.0;
 const MIN_EVA_RETURN_MARGIN_HOURS = 2.0;
 
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 /** Regla 1: Clasifica una elevación solar individual en NIGHT, LOW_SHADOWS u OPTIMAL. */
 export function classifySolarLighting(solarElevationDeg: number): LightingState {
   if (solarElevationDeg <= 0) {
@@ -127,7 +131,7 @@ export function simulateEnergyBalance(
     const deltaKwh = pGenKw - baseConsumptionKw;
     socKwh = Math.max(0, Math.min(batteryCapacityKwh, socKwh + deltaKwh));
     const socPct = (socKwh / batteryCapacityKwh) * 100;
-    hourlySocPct.push(Number(socPct.toFixed(2)));
+    hourlySocPct.push(round2(socPct));
 
     if (socPct < minBatteryPct) {
       minBatteryPct = socPct;
@@ -138,7 +142,7 @@ export function simulateEnergyBalance(
   }
 
   const finalBatteryPct = hourlySocPct[hourlySocPct.length - 1] ?? 100;
-  const roundedMinPct = Number(minBatteryPct.toFixed(2));
+  const roundedMinPct = round2(minBatteryPct);
 
   if (minBatteryPct < CRITICAL_BATTERY_PCT) {
     return {
@@ -187,8 +191,8 @@ export function evaluateCommunications(
     }
   }
 
-  const directLinkPct = Number(
-    ((directLinkHours / windowTelemetry.length) * 100).toFixed(2),
+  const directLinkPct = round2(
+    (directLinkHours / windowTelemetry.length) * 100,
   );
   const lossPct = 100 - directLinkPct;
 
@@ -406,10 +410,12 @@ export function evaluateMissionWindow(
 ): MissionEvaluation {
   validateMissionConfig(config, windowTelemetry);
 
-  const slice = windowTelemetry.slice(0, config.durationHours);
-  const catalogSite = getLunarSiteById(config.siteId);
+  const slice =
+    windowTelemetry.length === config.durationHours
+      ? windowTelemetry
+      : windowTelemetry.slice(0, config.durationHours);
   const slopeDeg =
-    config.terrainSlopeDeg ?? catalogSite?.terrainSlopeDeg ?? 5.0;
+    config.terrainSlopeDeg ?? getLunarSiteById(config.siteId)?.terrainSlopeDeg ?? 5.0;
 
   const lighting = evaluateLighting(slice);
   const energy = simulateEnergyBalance(
@@ -517,11 +523,16 @@ export function findBestLandingWindows(
     evaluation: MissionEvaluation;
   }
 
+  const resolvedSlopeDeg =
+    baseConfig.terrainSlopeDeg ??
+    getLunarSiteById(baseConfig.siteId)?.terrainSlopeDeg ??
+    5.0;
   const candidates: Candidate[] = [];
   for (let i = 0; i <= annualTelemetry.length - durationHours; i++) {
     const slice = annualTelemetry.slice(i, i + durationHours);
     const evaluation = evaluateMissionWindow(slice, {
       ...baseConfig,
+      terrainSlopeDeg: resolvedSlopeDeg,
       startUtc: slice[0].utcIso,
     });
     candidates.push({ index: i, evaluation });
