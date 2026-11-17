@@ -52,9 +52,30 @@ Proyecto-Final/
 - [x] **Fase 1:** Propuesta y alcance del MVP ([docs/propuesta.md](docs/propuesta.md))
 - [x] **Fase 2:** Especificación SDD y escenarios BDD ([spec/spec.md](spec/spec.md))
 - [x] **Fase 3:** Arquitectura MVVM + REST + SQLite ([docs/arquitectura.md](docs/arquitectura.md) y [docs/api.md](docs/api.md))
-- [ ] **Fase 4:** Descarga de datasets NASA + Implementación del Dominio con TDD
-- [ ] **Fase 5:** API REST + SQLite + Frontend 3D en Three.js
-- [ ] **Fase 6:** CI/CD en GitHub Actions, MCP, Bloque Avanzado, Seguridad e Investigación (`v1.0`)
+- [x] **Fase 4:** Descarga de datasets NASA + Implementación del Dominio con TDD
+- [x] **Fase 5:** API REST + SQLite + Frontend 3D en Three.js (`NavigatorViewModel`, `LunarScene3D`, consola HUD OpenMCT)
+- [ ] **Fase 6:** MCP, Bloque Avanzado, Seguridad, Investigación y Release (`v1.0`)
+
+---
+
+## Ejecución Local (Backend + Frontend 3D)
+
+```bash
+# 1. Instalar dependencias
+npm install
+
+# 2. Iniciar Backend REST API + SQLite en http://localhost:3000
+npm run dev:server
+
+# 3. En otra terminal, iniciar Frontend Vite + Three.js en http://localhost:5173
+npm run dev
+
+# Verificación de calidad y compilación
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
 
 ---
 

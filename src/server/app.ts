@@ -72,8 +72,10 @@ export function createApp(options: CreateAppOptions = {}): ServerAppContext {
   const dbPath =
     options.dbPath ?? process.env.DB_PATH ?? './data/lunar_missions.sqlite';
   const dataDir = options.dataDir ?? path.resolve(process.cwd(), 'data');
-  const corsOrigin =
-    options.corsOrigin ?? process.env.CORS_ORIGIN ?? 'http://localhost:5173';
+  const configuredOrigin = options.corsOrigin ?? process.env.CORS_ORIGIN;
+  const corsOrigin: string | string[] = configuredOrigin
+    ? configuredOrigin
+    : ['http://localhost:5173', 'http://127.0.0.1:5173'];
 
   const repository = new SqliteMissionRepository(dbPath);
   const catalogService = new TelemetryCatalogService(dataDir);

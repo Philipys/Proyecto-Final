@@ -6,38 +6,20 @@ import type {
   LolaDemSample,
   LunarSite,
   LunarSiteId,
+  MonthlySiteStats,
   OptimalWindowRecommendation,
+  SiteComparisonResponse,
+  SiteComparisonSummary,
 } from '../models/lunar.types.js';
 import { LUNAR_SITES } from '../models/lunarSites.catalog.js';
 import { mergeSolarAndEarthTelemetry } from '../services/HorizonsParser.js';
 import { NotFoundError, ValidationError, normalizeUtcIso } from './validators.js';
 
-export interface MonthlySiteStats {
-  readonly month: string;
-  readonly totalHours: number;
-  readonly daylightHours: number;
-  readonly optimalLightingHours: number;
-  readonly lowShadowHours: number;
-  readonly directEarthLinkHours: number;
-  readonly directEarthLinkPct: number;
-}
-
-export interface SiteComparisonSummary {
-  readonly site: LunarSite;
-  readonly totalHours: number;
-  readonly daylightHours: number;
-  readonly optimalLightingHours: number;
-  readonly lowShadowHours: number;
-  readonly directEarthLinkHours: number;
-  readonly directEarthLinkPct: number;
-  readonly monthly: readonly MonthlySiteStats[];
-}
-
-export interface SiteComparisonResponse {
-  readonly year: number;
-  readonly siteA: SiteComparisonSummary;
-  readonly siteB: SiteComparisonSummary;
-}
+export type {
+  MonthlySiteStats,
+  SiteComparisonResponse,
+  SiteComparisonSummary,
+};
 
 function parseIntRange(
   raw: unknown,
