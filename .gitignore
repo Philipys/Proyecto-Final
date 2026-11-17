@@ -1,0 +1,36 @@
+# Dependencias y builds
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Variables de entorno y secretos (solo se versiona .env.example)
+.env
+.env.*
+!.env.example
+
+# Bases de datos locales SQLite
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+data/*.sqlite*
+
+# Archivos temporales y del sistema operativo
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Documentos originales del curso y notas personales (se mantienen solo en local)
+_archivos_originales_profe/
+Proyecto_Final.pdf
+SpaceApps2026_Datos_y_Enlaces_de_Descarga.pdf
+
+# Archivos binarios masivos descargados en local (los scripts de descarga sí se versionan)
+data/raw/*.img
+data/raw/*.lbl
