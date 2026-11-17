@@ -29,6 +29,17 @@ Registro transparente de herramientas de IA utilizadas, decisiones tomadas frent
 
 ---
 
+### Sesión 2 — Paso 3: Pipeline CI/CD en GitHub Actions y Backend REST API + SQLite
+* **Qué se delegó al agente:**
+  * Configuración del flujo de integración continua en [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) (`lint`, `typecheck`, `test:coverage`, `build --if-present` y subida de artefactos con permisos mínimos `contents: read`).
+  * Implementación del Backend REST en `src/server/` (`validators.ts`, `SqliteMissionRepository.ts`, `TelemetryCatalogService.ts`, `app.ts`, `index.ts`) y suite de integración con Supertest en [`test/missionsApi.test.ts`](../test/missionsApi.test.ts).
+* **Decisiones humanas y verificaciones aplicadas:**
+  1. **Trabajo por sesiones ligeras y ramas pequeñas:** Se dividió el Paso 3 en la entrega de `feat/domain-motor-reglas` (motor + parsers + CI) y la rama `feat/backend-api-sqlite` para mantener revisiones acotadas vía Pull Request hacia `main`.
+  2. **Auditoría de dependencias (`AGENTS.md` §5.4):** Tras instalar `express`, `cors`, `better-sqlite3` y `supertest`, se verificó carga nativa de `better-sqlite3` en Node v24 y se ejecutó `npm audit --omit=dev` (0 vulnerabilidades en producción; las 12 alertas `high` en desarrollo corresponden únicamente a la cadena transitiva `picomatch` de herramientas de test/lint).
+  3. **Recálculo autoritativo y seguridad SQL/XSS:** Se verificó que `POST /api/missions` y `PUT /api/missions/:id` validan rangos físicos, sanitizan etiquetas HTML/script sin corromper consultas parametrizadas (`?`) en SQLite y recalculan el dictamen desde `MissionEvaluator` dentro de transacciones atómicas.
+
+---
+
 ## 3. Errores / Limitaciones del Agente Detectados y Corregidos
 *(Nota: El curso exige documentar al menos **3 casos reales** a lo largo del proyecto donde el agente se equivocó, propuso algo inseguro/inviable o falló en el entorno. Este registro se irá ampliando en cada fase.)*
 
