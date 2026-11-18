@@ -50,6 +50,20 @@ Registro transparente de herramientas de IA utilizadas, decisiones tomadas frent
 
 ---
 
+### Sesión 4 — Paso 5: Servidor MCP Propio, Bloque Avanzado y Evidencias (`feat/mcp-and-advanced-block`)
+* **Qué se delegó al agente:**
+  * Implementación del servidor MCP propio [`src/server/mcpServer.ts`](../src/server/mcpServer.ts) (JSON-RPC 2.0 sobre Stdio y endpoint `POST /api/mcp` en [`src/server/app.ts`](../src/server/app.ts)), exponiendo `evaluate_mission`, `find_best_2027_windows`, `compare_lunar_sites` y `list_lunar_sites`.
+  * Implementación del Bloque Avanzado en [`src/server/agentGovernance.ts`](../src/server/agentGovernance.ts): Hooks de seguridad/calidad `PreToolUse` (`HOOK-GIT-01`, `HOOK-SEC-02`, `HOOK-SEC-03`, `HOOK-SQL-04`, `HOOK-ARCH-05`) y Skill propio de auditoría *Flight Readiness Review (FRR)* (`runLunarMissionAuditSkill`).
+  * Suites de pruebas automatizadas [`test/mcpServer.test.ts`](../test/mcpServer.test.ts) y [`test/agentGovernance.test.ts`](../test/agentGovernance.test.ts), además de [`docs/mcp.md`](mcp.md).
+* **Decisiones humanas y verificaciones aplicadas:**
+  1. **Servidor MCP sin dependencias externas vulnerables:** Se implementó el protocolo JSON-RPC 2.0 MCP (`2025-03-26`) reutilizando directamente `TelemetryCatalogService`, `validateMissionConfigInput` y `MissionEvaluator`, evitando paquetes externos innecesarios y preservando `0` vulnerabilidades en producción.
+  2. **Restricción estricta del árbol oficial (`AGENTS.md` §1.1):** Se ubicaron tanto el servidor MCP como los módulos de gobernanza (Hooks y Skill) dentro de `src/server/` y sus pruebas en `test/`, sin crear carpetas fuera de la estructura oficial.
+  3. **Verificación en vivo del Bloque Avanzado:** Se ejecutó `npm run agent:governance` y `npm run agent:hook`, comprobando el bloqueo de `git push origin main`, `DROP TABLE`, exposición de tokens, concatenación SQL y dependencias impuras en `src/domain/`, así como la remediación automática de *Chang'e-4* (`NO-GO 45/100` -> `GO 100/100`).
+
+![Evidencia del Bloque Avanzado](../evidencias/05_bloque_avanzado_evidencia.png)
+
+---
+
 ## 3. Errores / Limitaciones del Agente Detectados y Corregidos
 *(Nota: El curso exige documentar al menos **3 casos reales** a lo largo del proyecto donde el agente se equivocó, propuso algo inseguro/inviable o falló en el entorno. Este registro se irá ampliando en cada fase.)*
 

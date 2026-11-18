@@ -99,6 +99,19 @@ Proyecto-Final/
   - [ ] `docs/bitacora_ia.md` con al menos tres errores del agente documentados.
   - [ ] Release `v1.0` publicado con artefacto.
 
+### 8. Especificación Obligatoria de Capturas de Pantalla (`evidencias/` y `README.md`)
+* **Dónde se guardan:** Todas las capturas deben almacenarse en `evidencias/` con los nombres numerados abajo y enlazarse con rutas relativas en `README.md`, `docs/mcp.md`, `docs/seguridad.md` y `docs/investigacion.md`.
+
+| Archivo en `evidencias/` | Qué debe mostrar | Cuándo se toma | Dónde se enlaza |
+| :--- | :--- | :--- | :--- |
+| `evidencias/01_main_protegida.png` | GitHub `Settings -> Branches` / `Rulesets` de `Philipys/Proyecto-Final` mostrando la rama `main` protegida (PR obligatorio + checks de CI). | En CI/CD o en el Paso 5 (cierre) desde la configuración de GitHub. | `README.md`, `docs/seguridad.md` |
+| `evidencias/02_ci_workflow_y_pr_verde.png` | Pull Request o pestaña `Actions` con el pipeline `.github/workflows/ci.yml` en verde (`typecheck`, `lint`, `test`, `build`) y artefacto generado. | Tras correr el CI en un PR (puede capturarse del historial de PRs/Actions en el Paso 5). | `README.md` |
+| `evidencias/03_cobertura_tests_vitest.png` | Salida de `npm run test:coverage` con todos los tests en verde y la tabla v8 (`% Stmts`, `% Branch`, `% Funcs`, `% Lines`). | Al cerrar la suite completa de pruebas en el Paso 5. | `README.md`, `docs/investigacion.md` |
+| `evidencias/04_mcp_funcionando.png` | Ejecución real o respuesta del servidor MCP del proyecto (`evaluate_landing_window`, `list_lunar_sites`, etc.) o MCP activo en desarrollo. | En el Paso 5 al implementar y probar el servidor MCP. | `docs/mcp.md` |
+| `evidencias/05_bloque_avanzado_evidencia.png` | Evidencia de activación y funcionamiento del elemento elegido del Bloque Avanzado (ej. Skill propio y/o Hook de calidad/seguridad). | En el Paso 5 al probar el Bloque Avanzado. | `README.md`, `docs/bitacora_ia.md` |
+| `evidencias/06_app_visor_3d_y_ruta_eva.png` | App web en el navegador con consola HUD OpenMCT, Globo Lunar 3D / malla topográfica LOLA en Three.js, sitio activo y ruta EVA trazada. | Al terminar el Paso 4 o al inicio del Paso 5 con servidor + frontend corriendo. | `README.md`, `docs/investigacion.md` |
+| `evidencias/07_app_simulador_5_reglas_y_crud.png` | Panel de las 5 Reglas (`GO`/`CAUTION`/`NO-GO`), curva horaria de batería, ventanas óptimas 2027 y lista CRUD persistida en SQLite. | Junto con la captura `06` tras guardar al menos un Plan de Misión real. | `README.md`, `docs/api.md` |
+
 ---
 
 ## Sección B — Ficha y Enlaces Oficiales del Reto #6: *Lunar Landing Site Navigator*

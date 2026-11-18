@@ -34,7 +34,7 @@ Proyecto-Final/
 │   ├── arquitectura.md       # Fase 3: Stack, capas MVVM, diagramas y decisiones
 │   ├── api.md                # Semana 4: Endpoints REST, JSON y esquema SQLite
 │   ├── bitacora_ia.md        # Semanas 1-2: Uso consciente de IA y errores corregidos
-│   ├── mcp.md                # Semana 10: Integración y servidor MCP (pendiente)
+│   ├── mcp.md                # Semana 10: Servidor MCP propio y Bloque Avanzado
 │   ├── seguridad.md          # Semanas 13-14: Modelo de amenazas y controles (pendiente)
 │   ├── investigacion.md      # Investigación aplicada (pendiente)
 │   └── retrospectiva.md      # Cierre y lecciones aprendidas (pendiente)
@@ -54,7 +54,8 @@ Proyecto-Final/
 - [x] **Fase 3:** Arquitectura MVVM + REST + SQLite ([docs/arquitectura.md](docs/arquitectura.md) y [docs/api.md](docs/api.md))
 - [x] **Fase 4:** Descarga de datasets NASA + Implementación del Dominio con TDD
 - [x] **Fase 5:** API REST + SQLite + Frontend 3D en Three.js (`NavigatorViewModel`, `LunarScene3D`, consola HUD OpenMCT)
-- [ ] **Fase 6:** MCP, Bloque Avanzado, Seguridad, Investigación y Release (`v1.0`)
+- [x] **Paso 5 (MCP + Bloque Avanzado):** Servidor MCP propio ([docs/mcp.md](docs/mcp.md)), Hooks/Skill de auditoría lunar y evidencias en `evidencias/`
+- [ ] **Fase 6:** Seguridad formal (`docs/seguridad.md`), Investigación (`docs/investigacion.md`), Retrospectiva y Release (`v1.0`)
 
 ---
 
@@ -70,12 +71,32 @@ npm run dev:server
 # 3. En otra terminal, iniciar Frontend Vite + Three.js en http://localhost:5173
 npm run dev
 
-# Verificación de calidad y compilación
+# Servidor MCP propio (Stdio) y demostraciones CLI (MCP + Bloque Avanzado)
+npm run mcp:server
+npm run mcp:demo
+npm run agent:governance
+
+# Verificación de calidad, cobertura y compilación
 npm run lint
 npm run typecheck
-npm test
+npm run test:coverage
 npm run build
 ```
+
+---
+
+## Evidencias Visuales (`evidencias/`)
+
+* **Consola HUD OpenMCT, Globo Lunar 3D / LOLA DEM y Ruta EVA:**
+  ![Visor Lunar 3D y Ruta EVA](evidencias/06_app_visor_3d_y_ruta_eva.png)
+* **Motor de 5 Reglas, Curva de Batería SoC, Ventanas 2027 y CRUD SQLite:**
+  ![Simulador de 5 Reglas y CRUD SQLite](evidencias/07_app_simulador_5_reglas_y_crud.png)
+* **Cobertura de Pruebas Automatizadas (`npm run test:coverage`):**
+  ![Cobertura Vitest v8](evidencias/03_cobertura_tests_vitest.png)
+* **Servidor MCP Propio en Funcionamiento (`evaluate_mission`, `find_best_2027_windows`, `compare_lunar_sites`):**
+  ![Servidor MCP Propio](evidencias/04_mcp_funcionando.png)
+* **Bloque Avanzado (Hooks `PreToolUse` de Seguridad/Calidad + Skill de Auditoría Lunar):**
+  ![Bloque Avanzado](evidencias/05_bloque_avanzado_evidencia.png)
 
 ---
 
