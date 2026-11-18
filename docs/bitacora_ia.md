@@ -64,6 +64,17 @@ Registro transparente de herramientas de IA utilizadas, decisiones tomadas frent
 
 ---
 
+### Sesión 5 — Paso 6: Seguridad, Investigación, Retrospectiva y Cierre `v1.0` (`docs/security-research-and-v1-release`)
+* **Qué se delegó al agente:**
+  * Verificación por GitHub REST API de las reglas activas de protección de `main` y del workflow CI/CD del PR #4, generando las evidencias finales [`evidencias/01_main_protegida.png`](../evidencias/01_main_protegida.png) y [`evidencias/02_ci_workflow_y_pr_verde.png`](../evidencias/02_ci_workflow_y_pr_verde.png).
+  * Redacción de [`docs/seguridad.md`](seguridad.md), [`docs/investigacion.md`](investigacion.md), [`docs/retrospectiva.md`](retrospectiva.md), [`LICENSE`](../LICENSE) y actualización final de [`README.md`](../README.md) y [`package.json`](../package.json) (`1.0.0`).
+* **Decisiones humanas y verificaciones aplicadas:**
+  1. **Veracidad estricta en evidencias y documentación:** Al detectar que `settings/branches` en GitHub exige sesión de administrador en el navegador, se evitó falsificar una captura de UI privada y se generó [`evidencias/01_main_protegida.png`](../evidencias/01_main_protegida.png) con la salida real verificada vía `gh api repos/Philipys/Proyecto-Final/branches/main/protection` junto al historial de PRs fusionados; para [`evidencias/02_ci_workflow_y_pr_verde.png`](../evidencias/02_ci_workflow_y_pr_verde.png) se capturó directamente la página pública de GitHub Actions del PR #4 mostrando el artefacto `build-and-coverage-report`.
+  2. **Auditoría exacta de métricas y archivos:** Se verificó directamente `maxSlopeDeg: 16.75°` en `data/lola/south_pole_dem_sample.json`, `0` usos de `innerHTML` en `src/`, `0` secretos en el historial Git (`git ls-files`) y `0` vulnerabilidades en `npm audit --omit=dev` (aislando las 12 alertas `high` de `picomatch` en `devDependencies`).
+  3. **Cierre y publicación:** Merge vía Pull Request final con CI en verde y publicación del Release `v1.0` con el artefacto web compilado (`dist/`).
+
+---
+
 ## 3. Errores / Limitaciones del Agente Detectados y Corregidos
 *(Nota: El curso exige documentar al menos **3 casos reales** a lo largo del proyecto donde el agente se equivocó, propuso algo inseguro/inviable o falló en el entorno. Este registro se irá ampliando en cada fase.)*
 

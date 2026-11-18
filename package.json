@@ -1,6 +1,6 @@
 {
   "name": "artemis-lunar-navigator",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Evaluador de sitios de alunizaje, simulador energético lunar 2027 y visor 3D con datos reales de NASA JPL Horizons y LOLA DEM.",
   "type": "module",
