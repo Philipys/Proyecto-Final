@@ -87,17 +87,17 @@ Proyecto-Final/
 * **Defensa en vivo (Semana 16):** (1) Demo en vivo del flujo principal + video grabado como Plan B; (2) Recorrido por el ciclo de vida (`spec/`, arquitectura, un PR real, CI/CD y uso de MCP); (3) Preguntas individuales y modificación en vivo del código; (4) Presentación de `docs/investigacion.md` y lecciones *vibe coding* vs. *agentic engineering*.
 * **Ponderación (100 pts):** Ciclo de vida y proceso (**20**) · Producto funcional y arquitectura (**20**) · Calidad y automatización (**15**) · Uso de agentes/MCP/Bloque avanzado (**15**) · Seguridad (**10**) · Investigación (**10**) · Documentación y defensa (**10**).
 * **Checklist obligatorio:**
-  - [ ] Repo público (o con acceso al profesor) y rama `main` protegida.
-  - [ ] `README.md` con descripción, instalación, ejecución, capturas, licencia y créditos.
-  - [ ] `spec/` con requisitos, criterios de aceptación y escenarios BDD.
-  - [ ] `docs/arquitectura.md` con diagrama y decisiones (justificación de stack web vs. Flutter).
-  - [ ] Pruebas automatizadas y CI en verde; artefacto generado.
-  - [ ] Al menos un servidor MCP usado o construido, documentado en `docs/mcp.md`.
-  - [ ] Un elemento del Bloque Avanzado con evidencia.
-  - [ ] `docs/seguridad.md` y cero secretos en historial Git.
-  - [ ] `docs/investigacion.md` con fuentes, aplicación y resultados.
-  - [ ] `docs/bitacora_ia.md` con al menos tres errores del agente documentados.
-  - [ ] Release `v1.0` publicado con artefacto.
+  - [x] Repo público (o con acceso al profesor) y rama `main` protegida.
+  - [x] `README.md` con descripción, instalación, ejecución, capturas, licencia y créditos.
+  - [x] `spec/` con requisitos, criterios de aceptación y escenarios BDD.
+  - [x] `docs/arquitectura.md` con diagrama y decisiones (justificación de stack web vs. Flutter).
+  - [x] Pruebas automatizadas y CI en verde; artefacto generado.
+  - [x] Al menos un servidor MCP usado o construido, documentado en `docs/mcp.md`.
+  - [x] Un elemento del Bloque Avanzado con evidencia.
+  - [x] `docs/seguridad.md` y cero secretos en historial Git.
+  - [x] `docs/investigacion.md` con fuentes, aplicación y resultados.
+  - [x] `docs/bitacora_ia.md` con al menos tres errores del agente documentados.
+  - [x] Release `v1.0` publicado con artefacto.
 
 ### 8. Especificación Obligatoria de Capturas de Pantalla (`evidencias/` y `README.md`)
 * **Dónde se guardan:** Todas las capturas deben almacenarse en `evidencias/` con los nombres numerados abajo y enlazarse con rutas relativas en `README.md`, `docs/mcp.md`, `docs/seguridad.md` y `docs/investigacion.md`.

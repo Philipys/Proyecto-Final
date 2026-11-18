@@ -28,6 +28,7 @@ Alunizar en la Luna en 2027 —especialmente en el **Polo Sur Lunar**— exige v
 Proyecto-Final/
 ├── README.md                 # Guía general del proyecto, instalación y ejecución
 ├── AGENTS.md                 # Instrucciones persistentes para el agente de IA
+├── LICENSE                   # Licencia MIT del proyecto
 ├── .env.example              # Plantilla de variables de entorno sin secretos
 ├── docs/
 │   ├── propuesta.md          # Fase 1: Problema, usuarios y alcance del MVP
@@ -35,15 +36,15 @@ Proyecto-Final/
 │   ├── api.md                # Semana 4: Endpoints REST, JSON y esquema SQLite
 │   ├── bitacora_ia.md        # Semanas 1-2: Uso consciente de IA y errores corregidos
 │   ├── mcp.md                # Semana 10: Servidor MCP propio y Bloque Avanzado
-│   ├── seguridad.md          # Semanas 13-14: Modelo de amenazas y controles (pendiente)
-│   ├── investigacion.md      # Investigación aplicada (pendiente)
-│   └── retrospectiva.md      # Cierre y lecciones aprendidas (pendiente)
+│   ├── seguridad.md          # Semanas 13-14: Modelo de amenazas, controles y npm audit
+│   ├── investigacion.md      # Investigación aplicada (PDS3 LOLA, proyección polar, WebGL)
+│   └── retrospectiva.md      # Cierre v1.0, métricas finales y lecciones aprendidas
 ├── spec/
 │   └── spec.md               # Fase 2: Requisitos funcionales, RNF y escenarios BDD
 ├── src/                      # Código fuente (Frontend MVVM + Three.js / Backend API)
 ├── test/                     # Pruebas automatizadas (TDD con Vitest)
 ├── .github/workflows/        # Pipeline CI/CD en GitHub Actions
-└── evidencias/               # Capturas de ejecución, cobertura, MCP y CI en verde
+└── evidencias/               # Capturas de main protegida, CI verde, cobertura, MCP y app 3D
 ```
 
 ---
@@ -55,7 +56,7 @@ Proyecto-Final/
 - [x] **Fase 4:** Descarga de datasets NASA + Implementación del Dominio con TDD
 - [x] **Fase 5:** API REST + SQLite + Frontend 3D en Three.js (`NavigatorViewModel`, `LunarScene3D`, consola HUD OpenMCT)
 - [x] **Paso 5 (MCP + Bloque Avanzado):** Servidor MCP propio ([docs/mcp.md](docs/mcp.md)), Hooks/Skill de auditoría lunar y evidencias en `evidencias/`
-- [ ] **Fase 6:** Seguridad formal (`docs/seguridad.md`), Investigación (`docs/investigacion.md`), Retrospectiva y Release (`v1.0`)
+- [x] **Fase 6:** Seguridad formal ([docs/seguridad.md](docs/seguridad.md)), Investigación ([docs/investigacion.md](docs/investigacion.md)), Retrospectiva ([docs/retrospectiva.md](docs/retrospectiva.md)) y Release (`v1.0`)
 
 ---
 
@@ -87,20 +88,24 @@ npm run build
 
 ## Evidencias Visuales (`evidencias/`)
 
-* **Consola HUD OpenMCT, Globo Lunar 3D / LOLA DEM y Ruta EVA:**
-  ![Visor Lunar 3D y Ruta EVA](evidencias/06_app_visor_3d_y_ruta_eva.png)
-* **Motor de 5 Reglas, Curva de Batería SoC, Ventanas 2027 y CRUD SQLite:**
-  ![Simulador de 5 Reglas y CRUD SQLite](evidencias/07_app_simulador_5_reglas_y_crud.png)
+* **Protección de Rama `main` en GitHub (PR + Status Checks Obligatorios):**
+  ![Protección de Rama main](evidencias/01_main_protegida.png)
+* **Pipeline CI/CD en Verde (`.github/workflows/ci.yml`) y Artefacto Generado:**
+  ![CI Workflow y PR en Verde](evidencias/02_ci_workflow_y_pr_verde.png)
 * **Cobertura de Pruebas Automatizadas (`npm run test:coverage`):**
   ![Cobertura Vitest v8](evidencias/03_cobertura_tests_vitest.png)
 * **Servidor MCP Propio en Funcionamiento (`evaluate_mission`, `find_best_2027_windows`, `compare_lunar_sites`):**
   ![Servidor MCP Propio](evidencias/04_mcp_funcionando.png)
 * **Bloque Avanzado (Hooks `PreToolUse` de Seguridad/Calidad + Skill de Auditoría Lunar):**
   ![Bloque Avanzado](evidencias/05_bloque_avanzado_evidencia.png)
+* **Consola HUD OpenMCT, Globo Lunar 3D / LOLA DEM y Ruta EVA:**
+  ![Visor Lunar 3D y Ruta EVA](evidencias/06_app_visor_3d_y_ruta_eva.png)
+* **Motor de 5 Reglas, Curva de Batería SoC, Ventanas 2027 y CRUD SQLite:**
+  ![Simulador de 5 Reglas y CRUD SQLite](evidencias/07_app_simulador_5_reglas_y_crud.png)
 
 ---
 
 ## Equipo y Licencia
 - **Autor:** Felipe *(Proyecto individual aprobado por el docente — USFQ 2026-10)*
 - **Fuentes de datos:** NASA/JPL Horizons API, NASA LRO LOLA PDS Geosciences Node (dominio público científico).
-- **Licencia:** MIT (se adjuntará en el archivo `LICENSE` en el cierre del proyecto).
+- **Licencia:** [MIT License](LICENSE)
