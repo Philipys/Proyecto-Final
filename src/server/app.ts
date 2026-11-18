@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import cors from 'cors';
 import express, {
@@ -9,6 +10,7 @@ import express, {
 } from 'express';
 import { evaluateMissionAtStart } from '../domain/MissionEvaluator.js';
 import type { MissionPlan } from '../models/lunar.types.js';
+import { LunarNavigatorMcpServer } from './mcpServer.js';
 import { SqliteMissionRepository } from './SqliteMissionRepository.js';
 import { TelemetryCatalogService } from './TelemetryCatalogService.js';
 import {
@@ -29,6 +31,7 @@ export interface ServerAppContext {
   readonly app: Express;
   readonly repository: SqliteMissionRepository;
   readonly catalogService: TelemetryCatalogService;
+  readonly mcpServer: LunarNavigatorMcpServer;
 }
 
 type AsyncRouteHandler = (
@@ -79,6 +82,7 @@ export function createApp(options: CreateAppOptions = {}): ServerAppContext {
 
   const repository = new SqliteMissionRepository(dbPath);
   const catalogService = new TelemetryCatalogService(dataDir);
+  const mcpServer = new LunarNavigatorMcpServer(catalogService);
   const app = express();
 
   app.disable('x-powered-by');
@@ -232,9 +236,33 @@ export function createApp(options: CreateAppOptions = {}): ServerAppContext {
     res.status(200).json({ deleted: true, id });
   });
 
+  app.post(
+    '/api/mcp',
+    asyncHandler(async (req, res) => {
+      const response = await mcpServer.handleRequest(req.body);
+      if (response === null) {
+        res.status(204).end();
+        return;
+      }
+      res.status(200).json(response);
+    }),
+  );
+
   app.use('/api', (_req: Request, res: Response) => {
     res.status(404).json({ error: 'Endpoint de API no encontrado.' });
   });
+
+  const distDir = path.resolve(process.cwd(), 'dist');
+  if (existsSync(distDir)) {
+    app.use(express.static(distDir));
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (req.method === 'GET' && !req.path.startsWith('/api')) {
+        res.sendFile(path.join(distDir, 'index.html'));
+        return;
+      }
+      next();
+    });
+  }
 
   app.use(
     (err: unknown, _req: Request, res: Response, _next: NextFunction): void => {
@@ -260,5 +288,5 @@ export function createApp(options: CreateAppOptions = {}): ServerAppContext {
     },
   );
 
-  return { app, repository, catalogService };
+  return { app, repository, catalogService, mcpServer };
 }

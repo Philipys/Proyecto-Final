@@ -14,7 +14,11 @@
     "lint": "eslint src test",
     "dev:server": "tsx watch src/server/index.ts",
     "start:server": "tsx src/server/index.ts",
-    "data:download": "tsx src/services/downloadNasaData.ts"
+    "data:download": "tsx src/services/downloadNasaData.ts",
+    "mcp:server": "tsx src/server/mcpServer.ts",
+    "mcp:demo": "tsx src/server/mcpServer.ts --demo",
+    "agent:hook": "tsx src/server/agentGovernance.ts --hook",
+    "agent:governance": "tsx src/server/agentGovernance.ts --demo"
   },
   "keywords": [
     "nasa",

@@ -101,8 +101,23 @@ Elimina un plan de misión y sus *waypoints* asociados por clave foránea `ON DE
 
 ---
 
-## 4. Controles de Seguridad en la API
+## 4. Endpoint JSON-RPC 2.0 para Servidor MCP (`POST /api/mcp`)
+
+Además del transporte local por `stdio` (`npm run mcp:server`), el backend expone el servidor MCP del proyecto mediante HTTP JSON-RPC 2.0:
+
+* **`POST /api/mcp`**: Acepta solicitudes JSON-RPC 2.0 (`initialize`, `ping`, `tools/list`, `tools/call`) para las herramientas `evaluate_mission`, `find_best_2027_windows`, `compare_lunar_sites` y `list_lunar_sites`.
+* **Respuestas:** `200 OK` con el payload `JsonRpcResponse` (o `204 No Content` para notificaciones como `notifications/initialized`). Detalle completo en [`docs/mcp.md`](mcp.md).
+
+---
+
+## 5. Controles de Seguridad en la API
 1. **Validación de esquemas:** Todas las peticiones `POST` y `PUT` validan tipos, rangos físicos y longitud máxima de cadenas antes de llegar al controlador.
 2. **Consultas parametrizadas:** `better-sqlite3` utiliza únicamente placeholders `?` (0 concatenación de SQL).
 3. **CORS restringido:** Limitado al origen configurado en `.env` (`CORS_ORIGIN`).
 4. **Manejo seguro de errores:** El servidor nunca retorna stack traces ni detalles internos de SQLite al cliente en producción.
+
+---
+
+## 6. Evidencia de Simulador y CRUD en SQLite
+
+![Simulador de 5 Reglas y CRUD en SQLite](../evidencias/07_app_simulador_5_reglas_y_crud.png)

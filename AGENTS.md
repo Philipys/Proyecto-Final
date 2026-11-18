@@ -56,6 +56,8 @@ Este documento define las reglas obligatorias de arquitectura, proceso, interfaz
 3. **Flujo Git:**
    - **Prohibido hacer `push` directo a `main`.** Todo cambio entra mediante ramas pequeñas (`feat/...`, `docs/...`, `fix/...`) y Pull Request con el pipeline de GitHub Actions en verde.
    - Cada decisión relevante o error corregido al agente debe registrarse en `docs/bitacora_ia.md`.
+4. **Evidencias Visuales Obligatorias (`evidencias/`):**
+   - Antes de cerrar el proyecto (Paso 5 / Release `v1.0`), verificar que existan las **7 capturas numeradas (`01` a `07`)** definidas en `docs/contexto_referencia.md` dentro de `evidencias/` y que estén enlazadas en `README.md` y la documentación correspondiente.
 
 ---
 
